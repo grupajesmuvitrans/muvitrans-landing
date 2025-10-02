@@ -1,3 +1,8 @@
+'use client';
+
+import { FormEvent, MouseEvent, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+
 export default function Home() {
   const benefits = [
     {
@@ -17,6 +22,58 @@ export default function Home() {
     },
   ];
 
+  const [companyName, setCompanyName] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus('loading');
+    setErrorMessage(null);
+
+    const { error } = await supabase.from('demo_requests').insert({
+      company_name: companyName,
+      contact_name: contactName,
+      email,
+      phone,
+      message,
+      source: 'landing',
+      user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+    });
+
+    if (error) {
+      setStatus('error');
+      setErrorMessage('Ocurrió un error al enviar tu solicitud. Intenta nuevamente.');
+      return;
+    }
+
+    setCompanyName('');
+    setContactName('');
+    setEmail('');
+    setPhone('');
+    setMessage('');
+    setStatus('success');
+  };
+
+  const handleScrollToDemo = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    const element = document.getElementById('demo');
+    element?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const statusMessage =
+    status === 'loading'
+      ? 'Enviando tu solicitud...'
+      : status === 'success'
+        ? '¡Gracias! Te contactaremos pronto.'
+        : status === 'error'
+          ? errorMessage
+          : null;
+
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <main>
@@ -35,8 +92,9 @@ export default function Home() {
               </p>
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row sm:justify-start">
                 <a
-                  href="#solicitar-demo"
+                  href="#demo"
                   className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-semibold text-indigo-900 shadow-lg transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                  onClick={handleScrollToDemo}
                 >
                   Solicitar demo
                 </a>
@@ -110,13 +168,15 @@ export default function Home() {
             </div>
 
             <div className="mt-12 rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-              <form className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <form id="demo" className="grid grid-cols-1 gap-6 md:grid-cols-2" onSubmit={handleSubmit}>
                 <label className="flex flex-col gap-2 text-left text-sm font-medium text-slate-100/90">
                   Nombre de empresa
                   <input
                     type="text"
-                    name="company"
+                    name="company_name"
                     placeholder="Ej. Logística Norte SA"
+                    value={companyName}
+                    onChange={(event) => setCompanyName(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/60 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
                   />
                 </label>
@@ -124,8 +184,10 @@ export default function Home() {
                   Nombre completo
                   <input
                     type="text"
-                    name="fullName"
+                    name="contact_name"
                     placeholder="Ej. María González"
+                    value={contactName}
+                    onChange={(event) => setContactName(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/60 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
                   />
                 </label>
@@ -135,6 +197,8 @@ export default function Home() {
                     type="email"
                     name="email"
                     placeholder="nombre@empresa.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/60 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
                   />
                 </label>
@@ -144,6 +208,8 @@ export default function Home() {
                     type="tel"
                     name="phone"
                     placeholder="Ej. +54 9 11 2345-6789"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/60 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
                   />
                 </label>
@@ -153,17 +219,25 @@ export default function Home() {
                     name="message"
                     rows={4}
                     placeholder="Cuéntanos cuántos camiones operas, qué rutas cubres y qué objetivos quieres alcanzar."
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/60 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
                   />
                 </label>
                 <div className="md:col-span-2 flex justify-end">
                   <button
                     type="submit"
+                    disabled={status === 'loading'}
                     className="inline-flex items-center justify-center rounded-full bg-sky-400 px-8 py-3 text-base font-semibold text-slate-950 shadow-lg transition-transform duration-200 hover:-translate-y-0.5 hover:bg-sky-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sky-200"
                   >
-                    Enviar solicitud
+                    {status === 'loading' ? 'Enviando...' : 'Enviar solicitud'}
                   </button>
                 </div>
+                {statusMessage && (
+                  <p className="md:col-span-2 text-sm font-medium text-slate-100/80">
+                    {statusMessage}
+                  </p>
+                )}
               </form>
             </div>
           </div>
