@@ -207,7 +207,7 @@ export default function Home() {
                   <input
                     type="tel"
                     name="phone"
-                    placeholder="Ej. +54 9 11 2345-6789"
+                    placeholder=""
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
                     className="w-full rounded-xl border border-white/15 bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/60 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-300/60"
